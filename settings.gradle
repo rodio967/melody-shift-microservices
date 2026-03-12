@@ -1,1 +1,3 @@
 rootProject.name = 'melody-shift-microservices'
+
+include 'common'
