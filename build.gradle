@@ -36,7 +36,7 @@ subprojects {
     }
     tasks.named('test') {
         useJUnitPlatform()
-    }
+    } 
 }
 
 project(':common') {

@@ -1,4 +1,4 @@
 rootProject.name = 'melody-shift-microservices'
 
 include 'common'
-include 'transfer-service'
+include 'user-service'
