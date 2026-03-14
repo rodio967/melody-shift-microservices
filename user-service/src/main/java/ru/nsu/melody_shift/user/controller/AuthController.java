@@ -48,28 +48,19 @@ public class AuthController {
                     .body(Map.of("error", "Пароли не совпадают"));
         }
 
-        try {
-            User user = userService.registerNewUser(
-                    request.getUsername(),
-                    request.getEmail(),
-                    request.getPassword()
-            );
+        User user = userService.registerNewUser(
+                request.getUsername(),
+                request.getEmail(),
+                request.getPassword()
+        );
 
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of(
-                            "success", true,
-                            "message", "Регистрация успешна. Теперь вы можете войти.",
-                            "userId", user.getId(),
-                            "username", user.getUsername()
-                    ));
-
-        } catch (UsernameAlreadyExistsException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Логин уже занят"));
-        } catch (EmailAlreadyExistsException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Email уже занят"));
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of(
+                        "success", true,
+                        "message", "Регистрация успешна. Теперь вы можете войти.",
+                        "userId", user.getId(),
+                        "username", user.getUsername()
+                ));
     }
 
     /**
