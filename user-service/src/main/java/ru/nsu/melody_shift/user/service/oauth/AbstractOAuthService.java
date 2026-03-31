@@ -44,7 +44,7 @@ public abstract class AbstractOAuthService implements OAuthService {
                 ? tokenResponse.getExpiresIn()
                 : getDefaultTokenLife();
 
-        return oauthTokenService.saveOrUpdateToken(
+        return oauthTokenService.saveToken(
                 user,
                 getPlatform(),
                 userInfo.getId(),
@@ -61,7 +61,9 @@ public abstract class AbstractOAuthService implements OAuthService {
                 .orElseThrow(() -> new RuntimeException(
                         "Token not found for platform: " + getPlatform()));
 
-        OAuthTokenResponse response = refreshAccessToken(token.getRefreshToken());
+        String plainRefreshToken = oauthTokenService.getDecryptedRefreshToken(token);
+
+        OAuthTokenResponse response = refreshAccessToken(plainRefreshToken);
 
         if (response == null || response.getAccessToken() == null) {
             throw new RuntimeException("Failed to refresh " + getPlatform());
