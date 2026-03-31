@@ -10,7 +10,7 @@ public interface OAuthService {
 
     OAuthToken exchangeCodeForToken(String code, User user);
 
-    String refreshAccessToken(String refreshToken);
+    OAuthToken refreshAndSave(User user);
 
     MusicPlatform getPlatform();
 }
