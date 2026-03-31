@@ -45,6 +45,19 @@ public class OAuthTokenService {
         return tokenRepository.save(token);
     }
 
+    @Transactional
+    public OAuthToken updateToken(
+            OAuthToken token,
+            String newAccessToken,
+            String newRefreshToken,
+            Long expiresIn) {
+        token.setAccessToken(newAccessToken);
+        token.setRefreshToken(newRefreshToken);
+        token.setExpiresAt(Instant.now().plusSeconds(expiresIn));
+
+        return tokenRepository.save(token);
+    }
+
     public Optional<OAuthToken> getToken(User user, MusicPlatform platform) {
         return tokenRepository.findByUserAndPlatform(user, platform);
     }
