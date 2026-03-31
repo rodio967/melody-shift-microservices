@@ -35,11 +35,11 @@ public class YandexOAuthService extends AbstractOAuthService {
                               @Value("${yandex.redirect-uri}") String redirectUri) {
         super(oauthTokenService, clientId, clientSecret, redirectUri);
 
-        this.tokenClient = restClientBuilder
+        this.tokenClient = restClientBuilder.clone()
                 .baseUrl(TOKEN_URL)
                 .build();
 
-        this.apiClient = restClientBuilder
+        this.apiClient = restClientBuilder.clone()
                 .baseUrl(API_BASE_URL)
                 .build();
     }
