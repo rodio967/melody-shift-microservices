@@ -14,7 +14,6 @@ import ru.nsu.melody_shift.user.service.OAuthTokenService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 @Service
 public class SpotifyOAuthService extends AbstractOAuthService {
@@ -77,28 +76,20 @@ public class SpotifyOAuthService extends AbstractOAuthService {
     }
 
     @Override
-    public String refreshAccessToken(String refreshToken) {
+    protected OAuthTokenResponse refreshAccessToken(String refreshToken) {
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
         requestBody.add("refresh_token", refreshToken);
 
-        String auth = clientId + ":" + clientSecret;
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
-
-
         OAuthTokenResponse response = tokenClient.post()
-                .uri(TOKEN_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + encodedAuth)
+                .uri("")
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + encodeCredentials())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(requestBody)
                 .retrieve()
                 .body(OAuthTokenResponse.class);
 
-        if (response == null || response.getAccessToken() == null) {
-            throw new RuntimeException("Failed to refresh Spotify token");
-        }
-
-        return response.getAccessToken();
+        return response;
     }
 
     @Override

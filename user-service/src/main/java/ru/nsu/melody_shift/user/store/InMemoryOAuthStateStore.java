@@ -6,6 +6,10 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
+/*
+ TODO: потом заменить на Redis
+ */
+
 @Component
 public class InMemoryOAuthStateStore implements OAuthStateStore {
 
