@@ -1,6 +1,7 @@
 package ru.nsu.melody_shift.user.service.oauth;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.nsu.melody_shift.user.dto.OAuthTokenResponse;
@@ -12,6 +13,7 @@ import ru.nsu.melody_shift.user.service.OAuthTokenService;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+@Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractOAuthService implements OAuthService {
 
@@ -25,19 +27,26 @@ public abstract class AbstractOAuthService implements OAuthService {
 
     @Override
     public OAuthToken exchangeCodeForToken(String code, User user) {
+        log.info("[{}] Exchanging code for token, user={}", getPlatform(), user.getUsername());
+
         // 1) Обменять code на access/refresh tokens
         OAuthTokenResponse tokenResponse = fetchToken(code);
 
         if (tokenResponse == null || tokenResponse.getAccessToken() == null) {
+            log.error("[{}] Failed to get token — empty response", getPlatform());
             throw new RuntimeException("Failed to get token from " + getPlatform());
         }
 
         // 2) Получить информацию о пользователе платформы
+        log.info("[{}] Token received, fetching user info", getPlatform());
         PlatformUserInfo userInfo = fetchUserInfo(tokenResponse.getAccessToken());
 
         if (userInfo == null || userInfo.getId() == null) {
+            log.error("[{}] Failed to get user info — empty response", getPlatform());
             throw new RuntimeException("Failed to get user info from " + getPlatform());
         }
+
+        log.info("[{}] Successfully authenticated platform user={}", getPlatform(), userInfo.getId());
 
         // 3) Сохранить токен в БД
         Long expiresIn = tokenResponse.getExpiresIn() != null
