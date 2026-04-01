@@ -1,6 +1,5 @@
 package ru.nsu.melody_shift.user.service.oauth;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,7 +15,7 @@ import ru.nsu.melody_shift.user.service.OAuthTokenService;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@Slf4j
+
 @Service
 public class YandexOAuthService extends AbstractOAuthService {
 
