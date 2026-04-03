@@ -1,5 +1,6 @@
 package ru.nsu.melody_shift.user.service.oauth;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -10,11 +11,10 @@ import org.springframework.web.client.RestClient;
 import ru.nsu.melody_shift.user.dto.OAuthTokenResponse;
 import ru.nsu.melody_shift.user.dto.PlatformUserInfo;
 import ru.nsu.melody_shift.common.enums.MusicPlatform;
-import ru.nsu.melody_shift.user.service.OAuthTokenService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-
+@Slf4j
 @Service
 public class SpotifyOAuthService extends AbstractOAuthService {
 
@@ -27,13 +27,12 @@ public class SpotifyOAuthService extends AbstractOAuthService {
     private static final String SCOPE = "user-read-email playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public";
 
     public SpotifyOAuthService(
-            OAuthTokenService oauthTokenService,
             RestClient.Builder restClientBuilder,
             @Value("${spotify.client-id}") String clientId,
             @Value("${spotify.client-secret}") String clientSecret,
             @Value("${spotify.redirect-uri}") String redirectUri
     ) {
-        super(oauthTokenService, clientId, clientSecret, redirectUri);
+        super(clientId, clientSecret, redirectUri);
 
         this.tokenClient = restClientBuilder.clone()
                 .baseUrl(TOKEN_URL)
@@ -67,7 +66,7 @@ public class SpotifyOAuthService extends AbstractOAuthService {
     }
 
     @Override
-    protected PlatformUserInfo fetchUserInfo(String accessToken) {
+    protected PlatformUserInfo getUserInfo(String accessToken) {
         return apiClient.get()
                 .uri("/me")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -88,6 +87,10 @@ public class SpotifyOAuthService extends AbstractOAuthService {
                 .body(requestBody)
                 .retrieve()
                 .body(OAuthTokenResponse.class);
+
+        if (response != null && response.getRefreshToken() == null) {
+            log.debug("[{}] Refresh token is empty", getPlatform());
+        }
 
         return response;
     }

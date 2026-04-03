@@ -10,9 +10,9 @@ import ru.nsu.melody_shift.common.enums.MusicPlatform;
 import ru.nsu.melody_shift.user.controller.exception.OAuthRedirectException;
 import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.common.exceptions.UnknownPlatformException;
-import ru.nsu.melody_shift.user.service.OAuthTokenService;
 import ru.nsu.melody_shift.user.service.UserService;
 import ru.nsu.melody_shift.user.service.oauth.OAuthService;
+import ru.nsu.melody_shift.user.service.PlatformTokenService;
 import ru.nsu.melody_shift.user.store.OAuthStateStore;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.UUID;
 public class OAuthController {
 
     private final Map<MusicPlatform, OAuthService> oauthServices;
-    private final OAuthTokenService oauthTokenService;
+    private final PlatformTokenService platformTokenService;
     private final UserService userService;
     private final OAuthStateStore oAuthStateStore;
 
@@ -46,7 +46,7 @@ public class OAuthController {
             @PathVariable String platform,
             Authentication auth
     ) {
-        log.info("[{}]Starting OAuth flow", platform);
+        log.info("[{}] Starting OAuth flow", platform);
 
         if (auth == null || !auth.isAuthenticated()) {
             throw new OAuthRedirectException("/login?error=not_authenticated",
@@ -108,7 +108,7 @@ public class OAuthController {
                         "User not found in callback: " + userId));
 
         try {
-            oauthService.exchangeCodeForToken(code, user);
+            platformTokenService.connectPlatform(code, user, oauthService.getPlatform());
             log.info("[{}] Successfully connected for user {}", platform , user.getUsername());
         } catch (Exception e) {
             throw new OAuthRedirectException("/dashboard?error=" + platform + "_failed",
