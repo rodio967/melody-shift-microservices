@@ -10,7 +10,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.nsu.melody_shift.common.exceptions.EmailAlreadyExistsException;
+import ru.nsu.melody_shift.common.exceptions.UserNotFoundException;
 import ru.nsu.melody_shift.common.exceptions.UsernameAlreadyExistsException;
+import ru.nsu.melody_shift.user.service.oauth.exceptions.PlatformNotConnectedException;
+import ru.nsu.melody_shift.user.service.oauth.exceptions.TokenExpiredException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,5 +69,38 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
         return ResponseEntity.internalServerError()
                 .body(Map.of("error", "Внутренняя ошибка сервера"));
+    }
+
+    @ExceptionHandler(PlatformNotConnectedException.class)
+    public ResponseEntity<Map<String, Object>> handlePlatformNotConnected(PlatformNotConnectedException ex) {
+        String platformName = ex.getPlatform().name().toLowerCase();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "error", "PLATFORM_NOT_CONNECTED",
+                        "message", ex.getMessage(),
+                        "authorizeUrl", "/api/oauth/" + platformName + "/authorize"
+                ));
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<Map<String, Object>> handleTokenExpired(TokenExpiredException ex) {
+        String platformName = ex.getPlatform().name().toLowerCase();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "error", "TOKEN_EXPIRED",
+                        "message", ex.getMessage(),
+                        "authorizeUrl", "/api/oauth/" + platformName + "/authorize"
+                ));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "error", "USER_NOT_FOUND",
+                        "message", ex.getMessage()
+                ));
     }
 }

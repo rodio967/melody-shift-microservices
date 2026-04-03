@@ -66,6 +66,6 @@ public class OAuthToken {
 
 
     public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+        return Instant.now().plusSeconds(60).isAfter(expiresAt);
     }
 }
