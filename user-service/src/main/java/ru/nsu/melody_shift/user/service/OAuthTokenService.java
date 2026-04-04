@@ -8,6 +8,7 @@ import ru.nsu.melody_shift.common.enums.MusicPlatform;
 import ru.nsu.melody_shift.user.domain.OAuthToken;
 import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.user.repository.OAuthTokenRepository;
+import ru.nsu.melody_shift.user.security.TokenEncryptor;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,9 +21,10 @@ import java.util.stream.Collectors;
 public class OAuthTokenService {
 
     private final OAuthTokenRepository tokenRepository;
+    private final TokenEncryptor encryptor;
 
     @Transactional
-    public OAuthToken saveOrUpdateToken(
+    public OAuthToken saveToken(
             User user,
             MusicPlatform platform,
             String platformUserId,
@@ -31,22 +33,38 @@ public class OAuthTokenService {
             Long expiresIn,
             String scope
     ) {
-        OAuthToken token = tokenRepository.findByUserAndPlatform(user, platform)
-                .orElse(new OAuthToken());
+        OAuthToken token = new OAuthToken();
 
         token.setUser(user);
         token.setPlatform(platform);
         token.setPlatformUserId(platformUserId);
-        token.setAccessToken(accessToken);
-        token.setRefreshToken(refreshToken);
+        token.setAccessToken(encryptor.encrypt(accessToken));
+        token.setRefreshToken(encryptor.encrypt(refreshToken));
         token.setExpiresAt(Instant.now().plusSeconds(expiresIn));
         token.setScope(scope);
 
         return tokenRepository.save(token);
     }
 
+    @Transactional
+    public OAuthToken updateToken(
+            OAuthToken token,
+            String newAccessToken,
+            String newRefreshToken,
+            Long expiresIn) {
+        token.setAccessToken(encryptor.encrypt(newAccessToken));
+        token.setRefreshToken(encryptor.encrypt(newRefreshToken));
+        token.setExpiresAt(Instant.now().plusSeconds(expiresIn));
+
+        return tokenRepository.save(token);
+    }
+
     public Optional<OAuthToken> getToken(User user, MusicPlatform platform) {
         return tokenRepository.findByUserAndPlatform(user, platform);
+    }
+
+    public String getDecryptedRefreshToken(OAuthToken token) {
+        return encryptor.decrypt(token.getRefreshToken());
     }
 
     public List<OAuthToken> getUserTokens(User user) {
@@ -67,8 +85,8 @@ public class OAuthTokenService {
 
     public OAuthTokenDto toDto(OAuthToken token) {
         return new OAuthTokenDto(
-                token.getAccessToken(),
-                token.getRefreshToken(),
+                encryptor.decrypt(token.getAccessToken()),
+                encryptor.decrypt(token.getRefreshToken()),
                 token.getExpiresAt(),
                 token.getPlatformUserId()
         );

@@ -90,3 +90,6 @@ logs/
 *.temp
 *.swp
 *~
+
+# Фронтенд
+frontend/node_modules/
