@@ -5,19 +5,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.melody_shift.common.dto.OAuthTokenDto;
 import ru.nsu.melody_shift.common.enums.MusicPlatform;
+import ru.nsu.melody_shift.common.exceptions.UserNotFoundException;
 import ru.nsu.melody_shift.user.domain.OAuthToken;
 import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.user.service.OAuthTokenService;
 import ru.nsu.melody_shift.user.service.UserService;
+import ru.nsu.melody_shift.user.service.PlatformTokenService;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * Internal API для других микросервисов
- * 
- * НЕ ВЫСТАВЛЯТЬ наружу через API Gateway!
- * Используется только для межсервисного взаимодействия.
  * 
  * Endpoints:
  * - GET /api/internal/users/{userId}/tokens?platform=SPOTIFY - получить токен пользователя
@@ -30,6 +29,7 @@ public class InternalUserController {
 
     private final UserService userService;
     private final OAuthTokenService tokenService;
+    private final PlatformTokenService platformTokenService;
 
     /**
      * Получить OAuth токен пользователя для платформы
@@ -44,21 +44,11 @@ public class InternalUserController {
             @RequestParam MusicPlatform platform
     ) {
         User user = userService.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
-        OAuthToken token = tokenService.getToken(user, platform)
-                .orElseThrow(() -> new RuntimeException(
-                        "Токен для платформы " + platform + " не найден. " +
-                        "Пользователь должен сначала подключить эту платформу."
-                ));
-
-        // Проверка что токен не истек
-        if (token.isExpired()) {
-            // TODO: В будущем надо добавить автоматическое обновление через refresh token
-            throw new RuntimeException("Access token истек. Требуется обновление.");
-        }
-
+        OAuthToken token = platformTokenService.getValidToken(user, platform);
         OAuthTokenDto dto = tokenService.toDto(token);
+
         return ResponseEntity.ok(dto);
     }
 
@@ -71,7 +61,7 @@ public class InternalUserController {
     @GetMapping("/{userId}/platforms")
     public ResponseEntity<?> getConnectedPlatforms(@PathVariable Long userId) {
         User user = userService.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         List<MusicPlatform> platforms = tokenService.getConnectedPlatforms(user);
 
