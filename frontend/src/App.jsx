@@ -5,7 +5,6 @@ function App() {
     return (
         <Routes>
             <Route path="/" element={<AuthPage />} />
-            <Route path="/profile" element={<AuthPage />} />  {/* Можно отдельную страницу профиля */}
         </Routes>
     );
 }

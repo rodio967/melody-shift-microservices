@@ -6,6 +6,7 @@ import {
     IdcardOutlined,
     LogoutOutlined
 } from '@ant-design/icons';
+import OAuthButtons from "../auth/OAuthButtons.jsx";
 
 const { Text, Paragraph } = Typography;
 
@@ -37,7 +38,7 @@ const UserProfileCard = ({ user, onLogout }) => {
                     Log out
                 </Button>
             }
-            style={cardStyle}  // ← Применяем стиль
+            style={cardStyle}
         >
             <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
 
@@ -77,6 +78,8 @@ const UserProfileCard = ({ user, onLogout }) => {
                         <Text>{user.email}</Text>
                     </Paragraph>
                 </div>
+
+                <OAuthButtons />
 
             </Space>
         </Card>
