@@ -36,12 +36,10 @@ public class OAuthToken {
     private String platformUserId;
 
 
-    @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String accessToken;
 
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
