@@ -9,11 +9,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ru.nsu.melody_shift.common.exceptions.EmailAlreadyExistsException;
-import ru.nsu.melody_shift.common.exceptions.UsernameAlreadyExistsException;
+import ru.nsu.melody_shift.common.exceptions.UserNotFoundException;
 import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.user.dto.AuthResponse;
 import ru.nsu.melody_shift.user.dto.LoginRequest;
@@ -95,7 +93,7 @@ public class AuthController {
         String jwt = jwtTokenProvider.generateToken(authentication);
 
         User user = userService.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(request.getUsername()));
 
         AuthResponse response = new AuthResponse(
                 jwt,
@@ -125,7 +123,7 @@ public class AuthController {
 
         String username = authentication.getName();
         User user = userService.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(username));
 
         return ResponseEntity.ok(Map.of(
                 "userId", user.getId(),
