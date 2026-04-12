@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.melody_shift.common.exceptions.EmailAlreadyExistsException;
@@ -71,35 +74,38 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        Authentication authentication;
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()
                     )
             );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String jwt = jwtTokenProvider.generateToken(authentication);
-
-            User user = userService.findByUsername(request.getUsername())
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
-            AuthResponse response = new AuthResponse(
-                    jwt,
-                    user.getId(),
-                    user.getUsername(),
-                    user.getEmail(),
-                    user.getRoles()
-            );
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Неверный логин или пароль"));
+        } catch (DisabledException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Аккаунт заблокирован"));
         }
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String jwt = jwtTokenProvider.generateToken(authentication);
+
+        User user = userService.findByUsername(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        AuthResponse response = new AuthResponse(
+                jwt,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRoles()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     /**
