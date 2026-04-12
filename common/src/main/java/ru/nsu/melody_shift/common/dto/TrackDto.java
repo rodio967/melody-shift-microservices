@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TrackDto {
 
-    public String title;
+    private String title;
 
-    public String artist;
+    private String artist;
 
-    public Integer durationSec;
+    private Integer durationSec;
 
-    public String platformId;
+    private String platformId;
 }
