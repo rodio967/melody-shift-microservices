@@ -28,18 +28,19 @@ public class JwtTokenProvider {
     }
 
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(Authentication authentication, Long userId) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return generateTokenFromUsername(userDetails.getUsername());
+        return generateTokenFromUsername(userDetails.getUsername(), userId);
     }
 
 
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUsername(String username, Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)

@@ -90,10 +90,11 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = jwtTokenProvider.generateToken(authentication);
-
         User user = userService.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(request.getUsername()));
+
+        String jwt = jwtTokenProvider.generateToken(authentication, user.getId());
+
 
         AuthResponse response = new AuthResponse(
                 jwt,
