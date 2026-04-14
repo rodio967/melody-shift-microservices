@@ -9,6 +9,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.melody_shift.common.exceptions.UserNotFoundException;
@@ -16,9 +18,12 @@ import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.user.dto.AuthResponse;
 import ru.nsu.melody_shift.user.dto.LoginRequest;
 import ru.nsu.melody_shift.user.dto.RegisterRequest;
+import ru.nsu.melody_shift.user.dto.UserInfoResponse;
+import ru.nsu.melody_shift.user.security.CustomUserDetails;
 import ru.nsu.melody_shift.user.security.JwtTokenProvider;
 import ru.nsu.melody_shift.user.service.UserService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -113,23 +118,17 @@ public class AuthController {
      * @return информация о пользователе
      */
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal CustomUserDetails principal) {
+        List<String> roles = principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Не авторизован"));
-        }
+        UserInfoResponse userInfoResponse = new UserInfoResponse(principal.getUserId(),
+                principal.getUsername(),
+                principal.getEmail(),
+                roles
+        );
 
-        String username = authentication.getName();
-        User user = userService.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException(username));
-
-        return ResponseEntity.ok(Map.of(
-                "userId", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "roles", user.getRoles()
-        ));
+        return ResponseEntity.ok(userInfoResponse);
     }
 }
