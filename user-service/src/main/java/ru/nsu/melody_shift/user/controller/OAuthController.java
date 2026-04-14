@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 import ru.nsu.melody_shift.common.enums.MusicPlatform;
 import ru.nsu.melody_shift.user.controller.exception.OAuthRedirectException;
 import ru.nsu.melody_shift.user.domain.User;
 import ru.nsu.melody_shift.common.exceptions.UnknownPlatformException;
+import ru.nsu.melody_shift.user.security.CustomUserDetails;
 import ru.nsu.melody_shift.user.service.UserService;
 import ru.nsu.melody_shift.user.service.oauth.OAuthService;
 import ru.nsu.melody_shift.user.service.PlatformTokenService;
@@ -44,23 +46,19 @@ public class OAuthController {
     @GetMapping("/{platform}/authorize")
     public RedirectView authorize(
             @PathVariable String platform,
-            Authentication auth
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
         log.info("[{}] Starting OAuth flow", platform);
 
-        if (auth == null || !auth.isAuthenticated()) {
+        if (principal == null) {
             throw new OAuthRedirectException("/login?error=not_authenticated",
                     "Unauthorized access to OAuth authorize");
         }
 
         OAuthService oauthService = resolveService(platform);
 
-        User user = userService.findByUsername(auth.getName())
-                .orElseThrow(() -> new OAuthRedirectException("/login?error=user_not_found",
-                        "User not found: " + auth.getName()));
-
         String state = UUID.randomUUID().toString();
-        oAuthStateStore.save(state, user.getId());
+        oAuthStateStore.save(state, principal.getUserId());
 
         String authUrl = oauthService.getAuthorizationUrl(state);
         log.info("Redirecting to OAuth provider: {}", authUrl);
