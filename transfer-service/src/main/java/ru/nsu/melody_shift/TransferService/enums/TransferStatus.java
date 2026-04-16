@@ -6,4 +6,5 @@ public enum TransferStatus {
     COMPLETED,
     FAILED,
     PARTIAL
+
 }

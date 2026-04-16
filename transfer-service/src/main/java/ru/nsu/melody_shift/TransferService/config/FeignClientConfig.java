@@ -22,7 +22,6 @@ public class FeignClientConfig {
                 if (authHeader != null) {
                     requestTemplate.header("Authorization", authHeader);
                 }
-                // Если Gateway передаёт X-User-Id, тоже можно пробросить
                 String userId = request.getHeader("X-User-Id");
                 if (userId != null) {
                     requestTemplate.header("X-User-Id", userId);

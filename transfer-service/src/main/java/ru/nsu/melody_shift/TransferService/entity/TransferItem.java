@@ -1,7 +1,7 @@
 package ru.nsu.melody_shift.TransferService.entity;
 
 import jakarta.persistence.*;
-import ru.nsu.melody_shift.TransferService.entity.TransferItemStatus;
+import ru.nsu.melody_shift.TransferService.enums.TransferItemStatus;
 import java.util.UUID;
 
 @Entity
@@ -24,11 +24,11 @@ public class TransferItem {
 
     @Enumerated(EnumType.STRING)
     private TransferItemStatus status;
+    private String errorMessage;
 
     // JPA
     protected TransferItem() {}
 
-    // factory method (рекомендую)
     public static TransferItem create(
             Transfer transfer,
             String sourceTrackId,
@@ -81,4 +81,18 @@ public class TransferItem {
     public TransferItemStatus getStatus() {
         return status;
     }
+
+    public void setTargetTrackId(String targetTrackId) {
+        this.targetTrackId = targetTrackId;
+    }
+
+    public void setStatus(TransferItemStatus status) {
+        this.status = status;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+
 }

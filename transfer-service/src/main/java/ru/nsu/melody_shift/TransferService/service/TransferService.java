@@ -15,8 +15,12 @@ import ru.nsu.melody_shift.TransferService.dto.TransferSummaryDto;
 import ru.nsu.melody_shift.TransferService.dto.request.CreateTransferRequest;
 import ru.nsu.melody_shift.TransferService.dto.response.TransferResponse;
 import ru.nsu.melody_shift.TransferService.entity.Transfer;
+import ru.nsu.melody_shift.TransferService.entity.TransferItem;
+import ru.nsu.melody_shift.TransferService.enums.TransferItemStatus;
 import ru.nsu.melody_shift.TransferService.enums.TransferStatus;
+import ru.nsu.melody_shift.TransferService.repository.TransferItemRepository;
 import ru.nsu.melody_shift.TransferService.repository.TransferRepository;
+import ru.nsu.melody_shift.common.dto.TrackDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +34,7 @@ public class TransferService {
     private final TransferRepository transferRepository;
     private final ProviderClient providerClient;
     private final MappingService mappingService;
+    private final TransferItemRepository transferItemRepository;
 
     @Transactional
     public TransferResponse startTransfer(String userId, CreateTransferRequest request) {
@@ -72,35 +77,55 @@ public class TransferService {
                 return;
             }
 
+            // Создаём целевой плейлист
             String newPlaylistId = providerClient.createPlaylist(
                     transfer.getTargetProvider(),
                     "Transferred playlist",
                     transfer.getUserId()
             );
+            transfer.setTargetPlaylist(newPlaylistId);
+            transferRepository.save(transfer);
 
             int success = 0;
-            for (var track : tracks) {
+            // Создаём TransferItem для каждого трека
+            for (TrackDto track : tracks) {
+                TransferItem item = TransferItem.create(
+                        transfer,
+                        track.getPlatformId(),
+                        track.getTitle(),
+                        track.getArtist()
+                );
+                transferItemRepository.save(item);
+
                 try {
                     var result = mappingService.findMatch(transfer.getTargetProvider(), track, transfer.getUserId());
                     if (result.isPresent()) {
                         providerClient.addTrack(transfer.getTargetProvider(), newPlaylistId, result.get(), transfer.getUserId());
+                        item.setTargetTrackId(result.get());
+                        item.setStatus(TransferItemStatus.SUCCESS);
                         success++;
+                    } else {
+                        item.setStatus(TransferItemStatus.FAILED);
+                        item.setErrorMessage("No matching track found");
                     }
                 } catch (Exception e) {
+                    item.setStatus(TransferItemStatus.FAILED);
+                    item.setErrorMessage(e.getMessage());
                     log.error("Failed to transfer track: {}", track, e);
                 }
+                transferItemRepository.save(item);
             }
 
-            transfer.setTargetPlaylist(newPlaylistId);
-
+            // Обновляем статус Transfer на основе успешности
             if (success == tracks.size()) {
                 transfer.markCompleted();
                 log.info("Transfer {} completed successfully", transferId);
-            } else {
+            } else if (success > 0) {
                 transfer.markPartial();
                 log.warn("Transfer {} completed partially: {}/{} tracks", transferId, success, tracks.size());
+            } else {
+                transfer.markFailed();
             }
-
             transferRepository.save(transfer);
 
         } catch (Exception e) {
@@ -111,7 +136,6 @@ public class TransferService {
             });
         }
     }
-
     public Transfer get(UUID id) {
         return transferRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer not found: " + id));
@@ -147,17 +171,68 @@ public class TransferService {
         if (transfer.getStatus() != TransferStatus.PARTIAL && transfer.getStatus() != TransferStatus.FAILED) {
             throw new IllegalStateException("Retry only allowed for PARTIAL or FAILED transfers");
         }
-        // TODO переделать под повторную попытку отдельных треков
-        processTransferAsync(transferId);
+
+        // Найти все неудавшиеся треки
+        List<TransferItem> failedItems = transferItemRepository.findByTransferIdAndStatus(transferId, TransferItemStatus.FAILED);
+        if (failedItems.isEmpty()) {
+            log.info("No failed tracks to retry for transfer {}", transferId);
+            return;
+        }
+
+        transfer.markInProgress();
+        transferRepository.save(transfer);
+
+        int success = 0;
+        for (TransferItem item : failedItems) {
+            try {
+                TrackDto trackDto = new TrackDto();
+                trackDto.setTitle(item.getSourceName());
+                trackDto.setArtist(item.getSourceArtist());
+
+                var result = mappingService.findMatch(transfer.getTargetProvider(), trackDto, userId);
+                if (result.isPresent()) {
+                    providerClient.addTrack(transfer.getTargetProvider(), transfer.getTargetPlaylistId(), result.get(), userId);
+                    item.setTargetTrackId(result.get());
+                    item.setStatus(TransferItemStatus.SUCCESS);
+                    success++;
+                } else {
+                    item.setStatus(TransferItemStatus.FAILED);
+                    item.setErrorMessage("No match found on retry");
+                }
+            } catch (Exception e) {
+                item.setStatus(TransferItemStatus.FAILED);
+                item.setErrorMessage(e.getMessage());
+            }
+            transferItemRepository.save(item);
+        }
+
+        long total = transferItemRepository.countByTransferId(transferId);
+        long successful = transferItemRepository.countByTransferIdAndStatus(transferId, TransferItemStatus.SUCCESS);
+        if (successful == total) {
+            transfer.markCompleted();
+        } else if (successful > 0) {
+            transfer.markPartial();
+        } else {
+            transfer.markFailed();
+        }
+        transferRepository.save(transfer);
     }
 
     public TransferProgressDto getProgress(UUID transferId) {
         Transfer transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
-        // TODO сделать получение данных из transfer_items
+        List<TransferItem> items = transferItemRepository.findByTransferId(transferId);
+        int total = items.size();
+        int success = (int) items.stream().filter(i -> i.getStatus() == TransferItemStatus.SUCCESS).count();
+        int failed = (int) items.stream().filter(i -> i.getStatus() == TransferItemStatus.FAILED).count();
+
         TransferProgressDto dto = new TransferProgressDto();
         dto.setTransferId(transfer.getId());
         dto.setStatus(transfer.getStatus().name());
+        dto.setTotalTracks(total);
+        dto.setSuccessCount(success);
+        dto.setFailedCount(failed);
+        dto.setProcessedTracks(success + failed);
         return dto;
     }
 
