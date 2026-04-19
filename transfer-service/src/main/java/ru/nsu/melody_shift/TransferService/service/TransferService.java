@@ -20,6 +20,7 @@ import ru.nsu.melody_shift.TransferService.enums.TransferItemStatus;
 import ru.nsu.melody_shift.TransferService.enums.TransferStatus;
 import ru.nsu.melody_shift.TransferService.repository.TransferItemRepository;
 import ru.nsu.melody_shift.TransferService.repository.TransferRepository;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 
 import java.util.List;
@@ -216,6 +217,11 @@ public class TransferService {
             transfer.markFailed();
         }
         transferRepository.save(transfer);
+    }
+
+    public List<PlaylistDto> getUserPlaylists(String userId, String provider) {
+        log.info("Fetching playlists for user {} and provider {}", userId, provider);
+        return providerClient.getUserPlaylists(provider, userId);
     }
 
     public TransferProgressDto getProgress(UUID transferId) {

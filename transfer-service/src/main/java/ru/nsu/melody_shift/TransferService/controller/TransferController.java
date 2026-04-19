@@ -8,6 +8,7 @@ import ru.nsu.melody_shift.TransferService.dto.response.TransferResponse;
 import ru.nsu.melody_shift.TransferService.entity.Transfer;
 import ru.nsu.melody_shift.TransferService.service.TransferService;
 import ru.nsu.melody_shift.TransferService.dto.*;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 
 
 import java.util.List;
@@ -60,5 +61,12 @@ public class TransferController {
             @RequestHeader("X-User-Id") String userId
     ) {
         return ResponseEntity.ok(transferService.startTransfer(userId, request));
+    }
+
+    @GetMapping("/playlists")
+    public ResponseEntity<List<PlaylistDto>> getUserPlaylists(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestParam String provider) {
+        return ResponseEntity.ok(transferService.getUserPlaylists(userId, provider));
     }
 }

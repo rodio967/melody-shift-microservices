@@ -2,6 +2,7 @@ package ru.nsu.melody_shift.TransferService.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 import java.util.List;
 
@@ -29,4 +30,8 @@ public interface ProviderClient {
                   @PathVariable("playlistId") String playlistId,
                   @RequestParam("trackId") String trackId,
                   @RequestHeader("X-User-Id") String userId);
+
+    @GetMapping("/api/providers/{provider}/playlists")
+    List<PlaylistDto> getUserPlaylists(@PathVariable("provider") String provider,
+                                       @RequestHeader("X-User-Id") String userId);
 }
