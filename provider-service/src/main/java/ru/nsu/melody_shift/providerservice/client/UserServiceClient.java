@@ -9,7 +9,6 @@ import ru.nsu.melody_shift.common.dto.OAuthTokenDto;
 
 @FeignClient(name = "user-service", url = "${user-service.url}")
 public interface UserServiceClient {
-    //TODO чекнуть как у родиона сделано
     //TODO ("/internal/users/{userId}/tokens") думаю лучше будет
     @GetMapping("/{userId}/tokens")
     OAuthTokenDto getUserToken(@PathVariable("userId") Long userId,

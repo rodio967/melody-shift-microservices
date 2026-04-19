@@ -1,5 +1,6 @@
 package ru.nsu.melody_shift.providerservice.service.api_client;
 
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 import java.util.List;
 
@@ -16,4 +17,7 @@ public interface MusicApiClient {
 
     // Добавить трек в плейлист
     void addTrack(String playlistId, String trackId, String accessToken);
+
+    // получить список плейлистов
+    List<PlaylistDto> getUserPlaylists(String accessToken);
 }
