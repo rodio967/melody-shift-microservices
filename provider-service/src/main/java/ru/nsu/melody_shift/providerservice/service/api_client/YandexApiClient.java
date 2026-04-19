@@ -2,6 +2,7 @@ package ru.nsu.melody_shift.providerservice.service.api_client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 import java.util.Collections;
 import java.util.List;
@@ -34,5 +35,11 @@ public class YandexApiClient implements MusicApiClient {
     public void addTrack(String playlistId, String trackId, String accessToken) {
         log.info("YandexMusic add track: playlistId={}, trackId={}", playlistId, trackId);
         // TODO: реальное добавление
+    }
+
+    @Override
+    public List<PlaylistDto> getUserPlaylists(String accessToken) {
+
+        return null;
     }
 }
