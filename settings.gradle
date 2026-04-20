@@ -2,3 +2,4 @@ rootProject.name = 'melody-shift-microservices'
 
 include 'common'
 include 'user-service'
+include 'api-gateway'
