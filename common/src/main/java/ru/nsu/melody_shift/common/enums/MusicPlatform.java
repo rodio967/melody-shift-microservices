@@ -6,6 +6,7 @@ import ru.nsu.melody_shift.common.exceptions.UnknownPlatformException;
 public enum MusicPlatform {
     SPOTIFY,
     YANDEX,
+    YOUTUBE,
     VK,
     APPLE_MUSIC;
     
@@ -15,6 +16,7 @@ public enum MusicPlatform {
             case YANDEX -> "Yandex Music";
             case VK -> "VK Music";
             case APPLE_MUSIC -> "Apple Music";
+            case YOUTUBE -> "YouTube Music";
         };
     }
 
