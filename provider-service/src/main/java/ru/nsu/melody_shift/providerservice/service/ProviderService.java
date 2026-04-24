@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 import ru.nsu.melody_shift.providerservice.client.UserServiceClient;
 import ru.nsu.melody_shift.common.dto.OAuthTokenDto;
@@ -67,5 +68,11 @@ public class ProviderService {
             throw new IllegalArgumentException("Unsupported provider: " + provider);
         }
         return client;
+    }
+
+    public List<PlaylistDto> getUserPlaylists(Long userId, String provider) {
+        String accessToken = getAccessToken(userId, provider);
+        MusicApiClient client = getClient(provider);
+        return client.getUserPlaylists(accessToken);
     }
 }

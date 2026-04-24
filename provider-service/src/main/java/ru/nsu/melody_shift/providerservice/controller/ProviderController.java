@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.nsu.melody_shift.common.dto.PlaylistDto;
 import ru.nsu.melody_shift.common.dto.TrackDto;
 import ru.nsu.melody_shift.providerservice.service.ProviderService;
 
@@ -56,4 +57,13 @@ public class ProviderController {
         providerService.addTrack(userId, provider, playlistId, trackId);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{provider}/playlists")
+    public ResponseEntity<List<PlaylistDto>> getUserPlaylists(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable String provider) {
+        log.info("Get user playlists: userId={}, provider={}", userId, provider);
+        return ResponseEntity.ok(providerService.getUserPlaylists(userId, provider));
+    }
+
 }
