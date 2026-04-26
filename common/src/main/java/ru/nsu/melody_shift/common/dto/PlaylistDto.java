@@ -11,5 +11,5 @@ public class PlaylistDto {
     private String id;
     private String name;
     private String description;
-    private Integer tracksCount;
+    private int tracksCount;
 }
